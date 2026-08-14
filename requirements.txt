@@ -1,0 +1,15 @@
+torch
+transformers
+datasets
+sentence-transformers
+scikit-learn
+pandas
+numpy
+PyMuPDF
+python-docx
+streamlit
+faiss-cpu
+python-dotenv
+reportlab
+matplotlib
+seaborn

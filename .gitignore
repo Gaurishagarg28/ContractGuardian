@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+hf_cache/
+temp/
+.env

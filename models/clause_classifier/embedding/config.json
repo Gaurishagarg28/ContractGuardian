@@ -1,0 +1,6 @@
+{
+    "model_name": "bert-base-uncased",
+    "max_length": 128,
+    "embedding_dimension": 768,
+    "pooling": "cls"
+}
