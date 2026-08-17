@@ -1,5 +1,6 @@
 from pathlib import Path
 import json
+import os
 
 import torch
 from transformers import AutoTokenizer
@@ -9,7 +10,7 @@ from src.ml.model import ContractBERT
 
 class EmbeddingService:
 
-    def __init__(self):
+    def __init__(self, device=None):
 
         # =====================================================
         # PROJECT ROOT
@@ -76,11 +77,25 @@ class EmbeddingService:
         # DEVICE
         # =====================================================
 
-        self.device = torch.device(
-            "cuda"
-            if torch.cuda.is_available()
-            else "cpu"
+        requested_device = (
+            device
+            or os.getenv("CONTRACTGUARDIAN_DEVICE", "auto")
+        ).lower()
+
+        if requested_device not in {"auto", "cpu", "cuda"}:
+            raise ValueError(
+                "CONTRACTGUARDIAN_DEVICE must be auto, cpu, or cuda."
+            )
+
+        use_cuda = (
+            requested_device != "cpu"
+            and torch.cuda.is_available()
         )
+
+        if requested_device == "cuda" and not torch.cuda.is_available():
+            raise RuntimeError("CUDA was requested but is not available.")
+
+        self.device = torch.device("cuda" if use_cuda else "cpu")
 
         print(
             f"Embedding device: {self.device}"
@@ -119,9 +134,18 @@ class EmbeddingService:
             self.model_name
         )
 
-        self.model.to(
-            self.device
-        )
+        try:
+            self.model.to(self.device)
+        except torch.OutOfMemoryError:
+            if requested_device == "cuda":
+                raise
+
+            # A contract analysis should remain available when a shared GPU
+            # is full. CPU inference is slower, but produces the same result.
+            torch.cuda.empty_cache()
+            self.device = torch.device("cpu")
+            self.model.to(self.device)
+            print("CUDA memory unavailable; falling back to CPU.")
 
         self.model.eval()
 

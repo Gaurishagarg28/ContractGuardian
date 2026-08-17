@@ -1,0 +1,38 @@
+[
+  {
+    "source_id": "ICA-0027",
+    "act": "Indian Contract Act, 1872",
+    "section": "27",
+    "title": "Agreement in restraint of trade",
+    "text": "PLACEHOLDER_FOR_VERIFIED_PRIMARY_SOURCE_TEXT",
+    "topics": [
+      "non-compete",
+      "restraint of trade",
+      "competition"
+    ]
+  },
+  {
+    "source_id": "ICA-0073",
+    "act": "Indian Contract Act, 1872",
+    "section": "73",
+    "title": "Compensation for loss or damage caused by breach of contract",
+    "text": "PLACEHOLDER_FOR_VERIFIED_PRIMARY_SOURCE_TEXT",
+    "topics": [
+      "damages",
+      "breach",
+      "compensation"
+    ]
+  },
+  {
+    "source_id": "ICA-0074",
+    "act": "Indian Contract Act, 1872",
+    "section": "74",
+    "title": "Compensation for breach where penalty stipulated",
+    "text": "PLACEHOLDER_FOR_VERIFIED_PRIMARY_SOURCE_TEXT",
+    "topics": [
+      "liquidated damages",
+      "penalty",
+      "damages"
+    ]
+  }
+]

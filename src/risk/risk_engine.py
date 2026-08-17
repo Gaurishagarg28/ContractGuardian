@@ -1,5 +1,5 @@
-from risk_rules import RISK_RULES
-from text_risk_analyzer import analyze_text
+from .risk_rules import RISK_RULES
+from .text_risk_analyzer import analyze_text
 
 
 def calculate_risk(

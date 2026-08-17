@@ -51,7 +51,7 @@ RISK_INDICATORS = {
             r"\bautomatically renew\b",
             r"\bautomatically renewed\b",
             r"\bautomatic renewal\b",
-            r"\brenew automatically\b"
+            r"\brenews? automatically\b"
         ],
         "points": 10,
         "description": "The agreement may renew without a new agreement."

@@ -1,4 +1,5 @@
 torch
+Flask
 transformers
 datasets
 sentence-transformers
