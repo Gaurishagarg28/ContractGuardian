@@ -1,29 +1,43 @@
-from difflib import SequenceMatcher
-
-
 class PredictionResolver:
     """
-    Resolves the raw ML prediction using:
-        1. DNN probabilities
-        2. Prediction margin
-        3. Clause heading evidence
-        4. Ambiguity detection
+    Conservative resolver for clause classification.
 
-    This does NOT retrain or modify the classifier.
+    Uses:
+        1. DNN prediction
+        2. Prediction confidence
+        3. Prediction margin
+        4. Strong clause-heading evidence
+
+    Important:
+        Weak heading similarity does NOT override the DNN.
     """
 
     def __init__(
         self,
         confidence_threshold=0.60,
         ambiguity_margin=0.10,
-        heading_weight=0.25
+        minimum_heading_tokens=2,
+        strong_heading_overlap=0.80
     ):
-        self.confidence_threshold = confidence_threshold
-        self.ambiguity_margin = ambiguity_margin
-        self.heading_weight = heading_weight
+
+        self.confidence_threshold = (
+            confidence_threshold
+        )
+
+        self.ambiguity_margin = (
+            ambiguity_margin
+        )
+
+        self.minimum_heading_tokens = (
+            minimum_heading_tokens
+        )
+
+        self.strong_heading_overlap = (
+            strong_heading_overlap
+        )
 
     # =========================================================
-    # TEXT NORMALIZATION
+    # NORMALIZE TEXT
     # =========================================================
 
     @staticmethod
@@ -32,85 +46,236 @@ class PredictionResolver:
         if not text:
             return ""
 
-        return (
-            str(text)
-            .lower()
-            .replace("&", "and")
-            .replace("/", " ")
-            .replace("-", " ")
-            .replace("_", " ")
-            .strip()
+        text = str(text).lower()
+
+        replacements = {
+            "&": " and ",
+            "/": " ",
+            "-": " ",
+            "_": " ",
+            ",": " ",
+            ".": " ",
+            ":": " ",
+            "(": " ",
+            ")": " "
+        }
+
+        for old, new in replacements.items():
+
+            text = text.replace(
+                old,
+                new
+            )
+
+        return " ".join(
+            text.split()
         )
 
     # =========================================================
-    # HEADING SIMILARITY
+    # GET TOKENS
     # =========================================================
 
-    def heading_similarity(
+    def tokens(self, text):
+
+        normalized = self.normalize(
+            text
+        )
+
+        if not normalized:
+            return set()
+
+        return set(
+            normalized.split()
+        )
+
+    # =========================================================
+    # HEADING MATCH
+    # =========================================================
+
+    def heading_match(
         self,
         heading,
         label
     ):
 
         if not heading or not label:
-            return 0.0
 
-        heading = self.normalize(
+            return {
+                "matched": False,
+                "score": 0.0,
+                "match_type": None
+            }
+
+        heading_normalized = (
+            self.normalize(heading)
+        )
+
+        label_normalized = (
+            self.normalize(label)
+        )
+
+        # -----------------------------------------------------
+        # EXACT MATCH
+        # -----------------------------------------------------
+
+        if (
+            heading_normalized
+            == label_normalized
+        ):
+
+            return {
+                "matched": True,
+                "score": 1.0,
+                "match_type": "exact"
+            }
+
+        # -----------------------------------------------------
+        # TOKEN MATCH
+        # -----------------------------------------------------
+
+        heading_tokens = self.tokens(
             heading
         )
 
-        label = self.normalize(
+        label_tokens = self.tokens(
             label
         )
 
-        # Exact normalized match
-        if heading == label:
-            return 1.0
-
-        # One contains the other
         if (
-            heading in label
-            or label in heading
+            not heading_tokens
+            or not label_tokens
         ):
-            return 0.90
 
-        # Word overlap
-        heading_words = set(
-            heading.split()
-        )
-
-        label_words = set(
-            label.split()
-        )
-
-        if not heading_words or not label_words:
-            return 0.0
+            return {
+                "matched": False,
+                "score": 0.0,
+                "match_type": None
+            }
 
         intersection = (
-            heading_words
-            & label_words
+            heading_tokens
+            & label_tokens
         )
 
-        union = (
-            heading_words
-            | label_words
+        shared_count = len(
+            intersection
         )
 
-        jaccard = (
-            len(intersection)
-            / len(union)
+        # -----------------------------------------------------
+        # Require at least two shared words
+        # -----------------------------------------------------
+
+        if (
+            shared_count
+            < self.minimum_heading_tokens
+        ):
+
+            return {
+                "matched": False,
+                "score": 0.0,
+                "match_type": None
+            }
+
+        # -----------------------------------------------------
+        # Dice similarity
+        # -----------------------------------------------------
+
+        score = (
+            2 * shared_count
+        ) / (
+            len(heading_tokens)
+            + len(label_tokens)
         )
 
-        # Character-level similarity
-        sequence_score = SequenceMatcher(
-            None,
-            heading,
-            label
-        ).ratio()
+        # -----------------------------------------------------
+        # Strong match
+        # -----------------------------------------------------
+
+        if (
+            score
+            >= self.strong_heading_overlap
+        ):
+
+            return {
+                "matched": True,
+                "score": round(
+                    score,
+                    4
+                ),
+                "match_type":
+                    "strong_token_overlap"
+            }
+
+        return {
+            "matched": False,
+            "score": round(
+                score,
+                4
+            ),
+            "match_type":
+                "weak_token_overlap"
+        }
+
+    # =========================================================
+    # FIND STRONG HEADING MATCH
+    # =========================================================
+
+    def find_heading_match(
+        self,
+        heading,
+        predictions
+    ):
+
+        if not heading:
+            return None
+
+        matches = []
+
+        for prediction in predictions:
+
+            label = prediction[
+                "label"
+            ]
+
+            evidence = (
+                self.heading_match(
+                    heading,
+                    label
+                )
+            )
+
+            matches.append({
+
+                "label":
+                    label,
+
+                "score":
+                    evidence["score"],
+
+                "match_type":
+                    evidence["match_type"],
+
+                "matched":
+                    evidence["matched"]
+            })
+
+        strong_matches = [
+
+            item
+
+            for item in matches
+
+            if item["matched"]
+
+        ]
+
+        if not strong_matches:
+            return None
 
         return max(
-            jaccard,
-            sequence_score
+            strong_matches,
+            key=lambda item:
+                item["score"]
         )
 
     # =========================================================
@@ -123,19 +288,27 @@ class PredictionResolver:
         margin
     ):
 
+        # Strong prediction with clear separation
         if (
-            confidence >= self.confidence_threshold
-            and margin >= self.ambiguity_margin
+            confidence
+            >= self.confidence_threshold
+            and
+            margin
+            >= self.ambiguity_margin
         ):
+
             return "HIGH_CONFIDENCE"
 
+        # Very weak prediction
         if confidence < 0.40:
+
             return "LOW_CONFIDENCE"
 
+        # Everything in between needs review
         return "REVIEW_REQUIRED"
 
     # =========================================================
-    # RESOLVE
+    # MAIN RESOLUTION
     # =========================================================
 
     def resolve(
@@ -149,21 +322,50 @@ class PredictionResolver:
             []
         )
 
+        # -----------------------------------------------------
+        # No prediction
+        # -----------------------------------------------------
+
         if not predictions:
 
             return {
-                "final_prediction": None,
-                "confidence": 0.0,
-                "status": "NO_PREDICTION",
-                "margin": 0.0,
-                "ambiguous": True,
-                "heading": heading,
-                "heading_match": None,
-                "alternatives": []
+
+                "final_prediction":
+                    None,
+
+                "dnn_prediction":
+                    None,
+
+                "confidence":
+                    0.0,
+
+                "second_best_confidence":
+                    0.0,
+
+                "margin":
+                    0.0,
+
+                "status":
+                    "NO_PREDICTION",
+
+                "ambiguous":
+                    True,
+
+                "resolution_reason":
+                    "No model prediction",
+
+                "heading":
+                    heading,
+
+                "heading_match":
+                    None,
+
+                "alternatives":
+                    []
             }
 
         # -----------------------------------------------------
-        # Raw DNN winner
+        # PRIMARY DNN PREDICTION
         # -----------------------------------------------------
 
         primary = predictions[0]
@@ -173,24 +375,30 @@ class PredictionResolver:
         ]
 
         primary_confidence = float(
-            primary["confidence"]
+            primary[
+                "confidence"
+            ]
         )
 
         # -----------------------------------------------------
-        # Second-best prediction
+        # SECOND PREDICTION
         # -----------------------------------------------------
 
         if len(predictions) > 1:
 
-            second = predictions[1]
-
             second_confidence = float(
-                second["confidence"]
+                predictions[1][
+                    "confidence"
+                ]
             )
 
         else:
 
             second_confidence = 0.0
+
+        # -----------------------------------------------------
+        # PREDICTION MARGIN
+        # -----------------------------------------------------
 
         margin = (
             primary_confidence
@@ -198,143 +406,105 @@ class PredictionResolver:
         )
 
         # -----------------------------------------------------
-        # Heading evidence
+        # DEFAULT RESULT
         # -----------------------------------------------------
 
-        heading_scores = []
-
-        if heading:
-
-            for prediction in predictions:
-
-                label = prediction[
-                    "label"
-                ]
-
-                score = self.heading_similarity(
-                    heading,
-                    label
-                )
-
-                heading_scores.append({
-
-                    "label": label,
-
-                    "similarity": round(
-                        score,
-                        4
-                    )
-                })
-
-        # -----------------------------------------------------
-        # Determine strongest heading match
-        # -----------------------------------------------------
-
-        best_heading = None
-
-        if heading_scores:
-
-            best_heading = max(
-                heading_scores,
-                key=lambda item:
-                item["similarity"]
-            )
-
-        # -----------------------------------------------------
-        # Decide final prediction
-        # -----------------------------------------------------
-
-        final_label = primary_label
+        final_label = (
+            primary_label
+        )
 
         resolution_reason = (
             "DNN prediction"
         )
 
-        heading_match = None
+        # -----------------------------------------------------
+        # HEADING EVIDENCE
+        # -----------------------------------------------------
 
-        if best_heading:
+        heading_match = (
+            self.find_heading_match(
+                heading,
+                predictions
+            )
+        )
 
-            heading_match = best_heading
+        # -----------------------------------------------------
+        # CONSERVATIVE HEADING OVERRIDE
+        # -----------------------------------------------------
 
-            best_label = (
-                best_heading["label"]
+        if heading_match:
+
+            heading_label = (
+                heading_match[
+                    "label"
+                ]
             )
 
-            best_score = (
-                best_heading["similarity"]
-            )
-
-            primary_heading_score = next(
-                (
-                    item["similarity"]
-                    for item in heading_scores
-                    if item["label"]
-                    == primary_label
-                ),
-                0.0
-            )
-
-            # -------------------------------------------------
-            # Heading strongly supports another class
-            # -------------------------------------------------
+            # Only allow heading evidence to
+            # override a weak/moderate DNN.
+            #
+            # We DO NOT override a strong DNN.
 
             if (
-                best_label != primary_label
-                and best_score >= 0.70
-                and primary_confidence < 0.75
+                heading_label
+                != primary_label
+                and
+                primary_confidence
+                < 0.75
             ):
 
-                final_label = best_label
-
-                resolution_reason = (
-                    "Heading evidence overrides "
-                    "low-confidence DNN prediction"
+                final_label = (
+                    heading_label
                 )
 
-            # -------------------------------------------------
-            # Heading agrees with DNN
-            # -------------------------------------------------
-
-            elif (
-                best_label == primary_label
-                and primary_heading_score >= 0.70
-            ):
-
                 resolution_reason = (
-                    "DNN prediction supported "
-                    "by clause heading"
+                    "Strong heading evidence "
+                    "overrides low-confidence "
+                    "DNN prediction"
                 )
 
         # -----------------------------------------------------
-        # Confidence / ambiguity
+        # CONFIDENCE
         # -----------------------------------------------------
 
-        status = self.confidence_status(
-            primary_confidence,
-            margin
+        status = (
+            self.confidence_status(
+                primary_confidence,
+                margin
+            )
         )
 
         ambiguous = (
+
+            primary_confidence < 0.40
+
+            or
+
             margin < self.ambiguity_margin
-            or primary_confidence < 0.40
+
         )
 
-        # Heading disagreement is important
+        # -----------------------------------------------------
+        # MODEL / HEADING DISAGREEMENT
+        # -----------------------------------------------------
+
         if (
-            best_heading
-            and best_heading["label"]
+            heading_match
+            and
+            heading_match[
+                "label"
+            ]
             != primary_label
-            and best_heading["similarity"] >= 0.70
         ):
 
             ambiguous = True
 
-            if status == "HIGH_CONFIDENCE":
-
-                status = "REVIEW_REQUIRED"
+            status = (
+                "REVIEW_REQUIRED"
+            )
 
         # -----------------------------------------------------
-        # Alternatives
+        # ALTERNATIVE PREDICTIONS
         # -----------------------------------------------------
 
         alternatives = []
@@ -344,13 +514,21 @@ class PredictionResolver:
             alternatives.append({
 
                 "label":
-                    prediction["label"],
+                    prediction[
+                        "label"
+                    ],
 
                 "confidence":
                     float(
-                        prediction["confidence"]
+                        prediction[
+                            "confidence"
+                        ]
                     )
             })
+
+        # -----------------------------------------------------
+        # FINAL RESULT
+        # -----------------------------------------------------
 
         return {
 
