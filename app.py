@@ -53,15 +53,24 @@ PAGE = """<!doctype html><html><head><meta charset=utf-8><meta name=viewport con
 const file=document.querySelector('#file'),button=document.querySelector('#review'),work=document.querySelector('#work'),bar=document.querySelector('#bar'),status=document.querySelector('#status'),results=document.querySelector('#results');let timer;function show(v,t){bar.style.width=v+'%';status.textContent=t}function render(data){const flagged=data.clauses.filter(c=>c.status==='success'&&c.review&&c.review.severity!=='Low'),high=flagged.filter(c=>c.review.severity==='High').length;results.innerHTML=`<section class=card><h2>Review complete</h2><div class=summary><div class=metric><b>${data.document.clauses_analyzed}</b><span class=muted>clauses analyzed</span></div><div class=metric><b>${flagged.length}</b><span class=muted>clauses need review</span></div><div class=metric><b>${high}</b><span class=muted>high-risk clauses</span></div></div><p><a href='${data.report_download_url}'>Download the review PDF</a></p></section>`+flagged.map(c=>`<article class='issue ${c.review.severity==='High'?'high':''}'><b>${c.clause_id} · ${c.review.severity} risk · ${c.review.risk_score}/100</b><div class=muted>Model confidence: ${Math.round(c.review.confidence*100)}%</div><p>${c.review.suggestion}</p>${c.review.laws.map(l=>`<p><b>${l.section}</b><br><span class=muted>${l.summary}</span><br><a target=_blank href='${l.url}'>Read the India Code section</a></p>`).join('')}</article>`).join('')}
 async function poll(id){const r=await fetch('/api/reviews/'+id),d=await r.json();if(d.status==='failed'){show(100,d.error);button.disabled=false;return}if(d.status==='completed'){show(100,'Review complete.');render(d.result);button.disabled=false;return}show(d.progress,d.message);timer=setTimeout(()=>poll(id),900)}button.onclick=async()=>{if(!file.files[0]){alert('Choose a PDF first.');return}button.disabled=true;work.hidden=false;results.innerHTML='';show(4,'Uploading contract…');const form=new FormData();form.append('file',file.files[0]);try{const r=await fetch('/api/reviews',{method:'POST',body:form}),d=await r.json();if(!r.ok)throw Error(d.error||'Upload failed');poll(d.review_id)}catch(e){show(100,e.message);button.disabled=false}};</script></body></html>"""
 
+def create_app(analyzer_factory=None):
+    app = Flask(__name__)
+    jobs = {}
+    reports = {}
+    analyzer = None
+    analyzer_lock = threading.Lock()
 
-def create_app():
-    app = Flask(__name__); jobs = {}; reports = {}; analyzer = None; analyzer_lock = threading.Lock()
+    if analyzer_factory is None:
+        from src.analysis.contract_analyzer import ContractAnalyzer
+        analyzer_factory = ContractAnalyzer
+
     def get_analyzer():
         nonlocal analyzer
+
         with analyzer_lock:
             if analyzer is None:
-                from src.analysis.contract_analyzer import ContractAnalyzer
-                analyzer = ContractAnalyzer()
+                analyzer = analyzer_factory()
+
             return analyzer
     def update(job, progress, message, status="running", **more): jobs[job].update(status=status, progress=progress, message=message, **more)
     def run_review(job, filename):
@@ -75,6 +84,70 @@ def create_app():
             except OSError: pass
     @app.get("/")
     def home(): return render_template_string(PAGE)
+
+    @app.get("/api/health")
+    def health():
+        return jsonify(status="ok")
+
+    @app.post("/api/analyze-text")
+    def analyze_text():
+        data = request.get_json(silent=True) or {}
+        text = data.get("text")
+
+        if not isinstance(text, str) or not text.strip():
+            return jsonify(error="Text is required."), 400
+
+        class TextClause:
+            clause_id = "TEXT-0001"
+
+            def __init__(self, text):
+                self.text = text
+
+        clause = TextClause(text.strip())
+
+        try:
+            result = get_analyzer().clause_analyzer.analyze(
+                clause
+            )
+        except Exception as error:
+            return jsonify(error=str(error)), 500
+
+        return jsonify(result), 200
+
+    @app.post("/api/analyze-pdf")
+    def analyze_pdf():
+        upload = request.files.get("file")
+
+        if (
+            upload is None
+            or Path(upload.filename or "").suffix.lower() != ".pdf"
+        ):
+            return jsonify(error="Choose a PDF file."), 400
+
+        temporary = NamedTemporaryFile(
+            delete=False,
+            suffix=".pdf"
+        )
+
+        try:
+            upload.save(temporary)
+            temporary.close()
+
+            result = get_analyzer().analyze_pdf(
+                Path(temporary.name)
+            )
+
+            return jsonify(result), 200
+
+        except Exception as error:
+            return jsonify(error=str(error)), 500
+
+        finally:
+            try:
+                os.unlink(temporary.name)
+            except OSError:
+                pass
+
     @app.post("/api/reviews")
     def start_review():
         upload = request.files.get("file")

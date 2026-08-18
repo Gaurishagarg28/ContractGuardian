@@ -215,7 +215,32 @@ class PredictionResolver:
             "match_type":
                 "weak_token_overlap"
         }
+    # =========================================================
+    # KNOWN CONTRACT HEADING ALIASES
+    # =========================================================
 
+    def explicit_heading_classification(self, heading):
+
+        if not heading:
+            return None
+
+        normalized = self.normalize(heading)
+
+        heading_aliases = {
+            "indemnity": "Indemnity",
+            "indemnification": "Indemnity",
+            "dispute resolution": "Dispute Resolution",
+            "dispute resolution and arbitration": "Dispute Resolution",
+            "liquidated damages and penalty": "Liquidated Damages",
+            "liquidated damages": "Liquidated Damages",
+            "governing law": "Governing Law",
+            "non compete": "Non-Compete",
+            "non compete and non solicitation": "Non-Compete",
+        }
+
+        return heading_aliases.get(
+            normalized
+        )
     # =========================================================
     # FIND STRONG HEADING MATCH
     # =========================================================
@@ -416,7 +441,25 @@ class PredictionResolver:
         resolution_reason = (
             "DNN prediction"
         )
+        # -----------------------------------------------------
+        # EXPLICIT HEADING CLASSIFICATION
+        # -----------------------------------------------------
 
+        explicit_heading = (
+            self.explicit_heading_classification(
+                heading
+            )
+        )
+
+        if explicit_heading:
+
+            final_label = (
+                explicit_heading
+            )
+
+            resolution_reason = (
+                "Explicit contract heading"
+            )
         # -----------------------------------------------------
         # HEADING EVIDENCE
         # -----------------------------------------------------
@@ -446,6 +489,8 @@ class PredictionResolver:
             # We DO NOT override a strong DNN.
 
             if (
+                not explicit_heading
+                and
                 heading_label
                 != primary_label
                 and
@@ -474,21 +519,28 @@ class PredictionResolver:
             )
         )
 
-        ambiguous = (
+        if explicit_heading:
+            ambiguous = False
+            status = "HIGH_CONFIDENCE"
 
-            primary_confidence < 0.40
+        else:
+            ambiguous = (
 
-            or
+                primary_confidence < 0.40
 
-            margin < self.ambiguity_margin
+                or
 
-        )
+                margin < self.ambiguity_margin
+
+            )
 
         # -----------------------------------------------------
         # MODEL / HEADING DISAGREEMENT
         # -----------------------------------------------------
 
         if (
+            not explicit_heading
+            and
             heading_match
             and
             heading_match[
