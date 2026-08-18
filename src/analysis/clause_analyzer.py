@@ -4,6 +4,10 @@ from src.ml.inference.prediction_resolver import (
     PredictionResolver
 )
 
+from src.legal.indian_legal_rag import (
+    IndianLegalRAG
+)
+
 
 class ClauseAnalyzer:
 
@@ -11,7 +15,8 @@ class ClauseAnalyzer:
         self,
         embedding_service,
         predictor,
-        prediction_resolver=None
+        prediction_resolver=None,
+        indian_legal_rag=None
     ):
 
         self.embedding_service = (
@@ -23,6 +28,15 @@ class ClauseAnalyzer:
         self.prediction_resolver = (
             prediction_resolver
             or PredictionResolver()
+        )
+
+        # -----------------------------------------------------
+        # INDIAN LEGAL RAG
+        # -----------------------------------------------------
+
+        self.indian_legal_rag = (
+            indian_legal_rag
+            or IndianLegalRAG()
         )
 
     def analyze(self, clause):
@@ -72,7 +86,32 @@ class ClauseAnalyzer:
         )
 
         # =====================================================
-        # 4. RULE-BASED RISK
+        # 4. FINAL CLAUSE TYPE
+        # =====================================================
+
+        clause_type = (
+            resolved_prediction.get(
+                "predicted_clause"
+            )
+            or classification.get(
+                "predicted_clause"
+            )
+        )
+
+        # =====================================================
+        # 5. INDIAN LEGAL RAG
+        # =====================================================
+
+        indian_legal_references = (
+            self.indian_legal_rag.retrieve(
+                clause_text=text,
+                clause_type=clause_type,
+                top_k=3
+            )
+        )
+
+        # =====================================================
+        # 6. RULE-BASED RISK
         # =====================================================
 
         risk = analyze_text(
@@ -80,7 +119,7 @@ class ClauseAnalyzer:
         )
 
         # =====================================================
-        # 5. STRUCTURED RESULT
+        # 7. STRUCTURED RESULT
         # =====================================================
 
         return {
@@ -128,6 +167,9 @@ class ClauseAnalyzer:
 
             "resolved_classification":
                 resolved_prediction,
+
+            "indian_legal_references":
+                indian_legal_references,
 
             "risk":
                 risk

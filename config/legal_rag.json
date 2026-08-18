@@ -2,13 +2,14 @@
     "embedding_model": {
         "name": "sentence-transformers/all-MiniLM-L6-v2",
         "cache_dir": "D:/ContractGuardian/hf_cache",
-        "device": "cuda"
+        "device": "cpu"
     },
     "vector_store": {
         "index_path": "models/legal_rag/legal.index",
         "metadata_path": "models/legal_rag/metadata.json"
     },
     "retrieval": {
-        "top_k": 5
+    "top_k": 3,
+    "min_similarity": 0.30
     }
 }

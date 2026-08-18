@@ -1,0 +1,206 @@
+[
+  {
+    "source_id": "ICA-0027",
+    "act": "Indian Contract Act, 1872",
+    "section": "27",
+    "title": "Agreement in restraint of trade",
+    "text": "Every agreement by which any one is restrained from exercising a lawful profession, trade or business of any kind, is to that extent void. Exception 1 permits certain agreements concerning the sale of the goodwill of a business, subject to specified local limits and the conditions stated in the section.",
+    "topics": [
+      "non-compete",
+      "restraint of trade",
+      "competition",
+      "post termination restriction"
+    ]
+  },
+  {
+    "source_id": "ICA-0073",
+    "act": "Indian Contract Act, 1872",
+    "section": "73",
+    "title": "Compensation for loss or damage caused by breach of contract",
+    "text": "When a contract has been broken, the party who suffers by such breach is entitled to receive from the party who has broken the contract compensation for loss or damage caused by the breach that naturally arose in the usual course of things from the breach, or which the parties knew, when they made the contract, to be likely to result from the breach. Such compensation is not to be given for remote and indirect loss or damage sustained by reason of the breach.",
+    "topics": [
+      "breach",
+      "damages",
+      "loss",
+      "compensation",
+      "limitation of liability"
+    ]
+  },
+  {
+    "source_id": "ICA-0074",
+    "act": "Indian Contract Act, 1872",
+    "section": "74",
+    "title": "Compensation where penalty stipulated",
+    "text": "When a contract has been broken, if a sum is named in the contract as the amount to be paid in case of such breach, or if the contract contains any other stipulation by way of penalty, the party complaining of the breach is entitled to receive reasonable compensation not exceeding the amount so named or, as the case may be, the penalty stipulated for.",
+    "topics": [
+      "liquidated damages",
+      "penalty",
+      "breach",
+      "reasonable compensation"
+    ]
+  },
+  {
+    "source_id": "ICA-0028",
+    "act": "Indian Contract Act, 1872",
+    "section": "28",
+    "title": "Agreements in restraint of legal proceedings, void",
+    "text": "Every agreement which absolutely restricts a party from enforcing contractual rights through ordinary legal proceedings, or limits the time for enforcing those rights, is void to the extent specified in the section. The section preserves specified agreements referring disputes to arbitration.",
+    "topics": [
+      "dispute resolution",
+      "legal proceedings",
+      "arbitration",
+      "enforcement of rights"
+    ]
+  },
+  {
+    "source_id": "ICA-0075",
+    "act": "Indian Contract Act, 1872",
+    "section": "75",
+    "title": "Party rightfully rescinding contract entitled to compensation",
+    "text": "A person who rightfully rescinds a contract is entitled to compensation for damage sustained through the non-fulfilment of the contract.",
+    "topics": [
+      "rescission",
+      "breach",
+      "compensation",
+      "termination"
+    ]
+  },
+  {
+    "source_id": "ICA-0124",
+    "act": "Indian Contract Act, 1872",
+    "section": "124",
+    "title": "Contract of indemnity defined",
+    "text": "A contract of indemnity is a contract by which one party promises to save the other from loss caused by the conduct of the promisor or by the conduct of another person.",
+    "topics": [
+      "indemnity",
+      "loss",
+      "compensation",
+      "third party claims"
+    ]
+  },
+  {
+    "source_id": "ICA-0125",
+    "act": "Indian Contract Act, 1872",
+    "section": "125",
+    "title": "Rights of indemnity-holder when sued",
+    "text": "The promisee in a contract of indemnity, acting within the scope of authority, may recover certain damages, costs and sums paid under qualifying compromise arrangements in respect of matters covered by the indemnity.",
+    "topics": [
+      "indemnity",
+      "damages",
+      "costs",
+      "claims"
+    ]
+  },
+  {
+    "source_id": "ICA-0010",
+    "act": "Indian Contract Act, 1872",
+    "section": "10",
+    "title": "What agreements are contracts",
+    "text": "All agreements are contracts if they are made by the free consent of parties competent to contract, for a lawful consideration and with a lawful object, and are not hereby expressly declared to be void.",
+    "topics": [
+      "contract formation",
+      "free consent",
+      "lawful consideration",
+      "lawful object",
+      "valid contract"
+    ]
+  },
+  {
+    "source_id": "ICA-0014",
+    "act": "Indian Contract Act, 1872",
+    "section": "14",
+    "title": "Free consent",
+    "text": "Consent is said to be free when it is not caused by coercion, undue influence, fraud, misrepresentation, or mistake, subject to the provisions of the Act.",
+    "topics": [
+      "free consent",
+      "coercion",
+      "undue influence",
+      "fraud",
+      "misrepresentation",
+      "mistake"
+    ]
+  },
+  {
+    "source_id": "ICA-0019",
+    "act": "Indian Contract Act, 1872",
+    "section": "19",
+    "title": "Voidability of agreements without free consent",
+    "text": "When consent to an agreement is caused by coercion, fraud or misrepresentation, the agreement is a contract voidable at the option of the party whose consent was so caused, subject to the provisions of the section.",
+    "topics": [
+      "voidable contract",
+      "coercion",
+      "fraud",
+      "misrepresentation",
+      "consent"
+    ]
+  },
+  {
+    "source_id": "ICA-0023",
+    "act": "Indian Contract Act, 1872",
+    "section": "23",
+    "title": "What considerations and objects are lawful, and what not",
+    "text": "The consideration or object of an agreement is lawful unless it is forbidden by law, would defeat the provisions of any law, is fraudulent, involves injury to the person or property of another, or is regarded by the Court as immoral or opposed to public policy.",
+    "topics": [
+      "lawful consideration",
+      "lawful object",
+      "public policy",
+      "fraud",
+      "illegality"
+    ]
+  },
+  {
+    "source_id": "ICA-0055",
+    "act": "Indian Contract Act, 1872",
+    "section": "55",
+    "title": "Effect of failure to perform at fixed time",
+    "text": "When a party to a contract promises to do a certain thing at or before a specified time, and fails to do it at or before that time, the contract becomes voidable at the option of the promisee if the parties intended that time should be of the essence of the contract.",
+    "topics": [
+      "time of performance",
+      "delay",
+      "termination",
+      "breach",
+      "time is essence"
+    ]
+  },
+  {
+    "source_id": "ICA-0062",
+    "act": "Indian Contract Act, 1872",
+    "section": "62",
+    "title": "Effect of novation, rescission, and alteration of contract",
+    "text": "If the parties to a contract agree to substitute a new contract for it, or to rescind or alter it, the original contract need not be performed.",
+    "topics": [
+      "novation",
+      "rescission",
+      "alteration",
+      "contract amendment",
+      "termination"
+    ]
+  },
+  {
+    "source_id": "ICA-0063",
+    "act": "Indian Contract Act, 1872",
+    "section": "63",
+    "title": "Promise may dispense with or remit performance",
+    "text": "Every promisee may dispense with or remit, wholly or in part, the performance of the promise made to him, or may extend the time for such performance, or may accept instead of it any satisfaction which he thinks fit.",
+    "topics": [
+      "waiver",
+      "remission",
+      "performance",
+      "extension of time",
+      "settlement"
+    ]
+  },
+  {
+    "source_id": "ACA-0007",
+    "act": "Arbitration and Conciliation Act, 1996",
+    "section": "7",
+    "title": "Arbitration agreement",
+    "text": "An arbitration agreement means an agreement by the parties to submit to arbitration all or certain disputes which have arisen or which may arise between them in respect of a defined legal relationship, whether contractual or not. An arbitration agreement may be in the form of an arbitration clause in a contract or in the form of a separate agreement and shall be in writing.",
+    "topics": [
+      "arbitration",
+      "dispute resolution",
+      "arbitration clause",
+      "written agreement"
+    ]
+  }
+]
